@@ -1,0 +1,46 @@
+off_products.csv.gz: 314,568 labeled rows  (84s elapsed)
+obf_products.csv.gz: 8,756 labeled rows  (85s elapsed)
+opf_products.csv.gz: 2,239 labeled rows  (86s elapsed)
+total labeled (deduped): 313,463  | english-market: 43,229
+
+wrote 200,000 rows -> data/processed/products_labeled.csv  (93s total)
+
+plastic_level:
+ plastic_level
+medium    93036
+none      65030
+low       32869
+high       9065
+
+plastic_type:
+ plastic_type
+mixed_other    70194
+none           65030
+film           39339
+PET            11991
+PP             11189
+HDPE            2257
+
+source:
+ source
+food        189205
+beauty        8634
+products      2161
+
+category_group:
+ category_group
+beverages            59675
+snacks_sweets        50766
+other                20487
+dairy                19048
+meat_fish            17541
+frozen                8649
+sauces_condiments     6549
+personal_care         5501
+household             5074
+fresh_produce         2944
+pantry                1524
+baby                  1474
+bakery                 493
+electronics            164
+pet                    111

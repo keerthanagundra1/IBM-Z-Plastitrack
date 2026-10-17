@@ -1,0 +1,4 @@
+# Force LF so scripts, Dockerfile and .eml files work on LinuxONE
+* text=auto eol=lf
+*.png binary
+*.ipynb text eol=lf

@@ -1,0 +1,38 @@
+{
+  "plastic_level": {
+    "logreg": {
+      "accuracy": 0.6141,
+      "macro_f1": 0.525,
+      "weighted_f1": 0.6295,
+      "train_seconds": 344.9
+    },
+    "xgboost": {
+      "accuracy": 0.5445,
+      "macro_f1": 0.4649,
+      "weighted_f1": 0.5593,
+      "train_seconds": 202.5
+    },
+    "best": "logreg"
+  },
+  "plastic_type": {
+    "logreg": {
+      "accuracy": 0.5671,
+      "macro_f1": 0.4967,
+      "weighted_f1": 0.5734,
+      "train_seconds": 417.3
+    },
+    "xgboost": {
+      "accuracy": 0.4453,
+      "macro_f1": 0.3934,
+      "weighted_f1": 0.4583,
+      "train_seconds": 264.2
+    },
+    "best": "logreg"
+  },
+  "platform": {
+    "machine": "s390x",
+    "byteorder": "big",
+    "python": "3.12.15",
+    "rows": 200000
+  }
+}

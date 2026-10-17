@@ -1,0 +1,100 @@
+Platform: s390x | Python 3.12.15 | 3 CPUs
+Rows: 200,000
+
+================ target: plastic_level ================
+features: 80,018 columns  (20s)
+/opt/venv/lib64/python3.12/site-packages/sklearn/linear_model/_logistic.py:599: ConvergenceWarning: lbfgs failed to converge after 2000 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=2000).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+[0]	validation_0-mlogloss:1.37302
+[50]	validation_0-mlogloss:1.22580
+[100]	validation_0-mlogloss:1.18791
+[150]	validation_0-mlogloss:1.16514
+[200]	validation_0-mlogloss:1.14796
+[250]	validation_0-mlogloss:1.13486
+[299]	validation_0-mlogloss:1.12403
+
+--- logreg: acc=0.6141  macroF1=0.525  weightedF1=0.6295  (345s)
+              precision    recall  f1-score   support
+
+        high      0.196     0.414     0.266      1813
+         low      0.417     0.529     0.466      6574
+      medium      0.752     0.631     0.686     18607
+        none      0.703     0.661     0.682     13006
+
+    accuracy                          0.614     40000
+   macro avg      0.517     0.559     0.525     40000
+weighted avg      0.656     0.614     0.629     40000
+
+
+--- xgboost: acc=0.5445  macroF1=0.4649  weightedF1=0.5593  (203s)
+              precision    recall  f1-score   support
+
+        high      0.162     0.387     0.229      1813
+         low      0.388     0.468     0.424      6574
+      medium      0.657     0.587     0.620     18607
+        none      0.638     0.545     0.587     13006
+
+    accuracy                          0.544     40000
+   macro avg      0.461     0.497     0.465     40000
+weighted avg      0.584     0.544     0.559     40000
+
+>>> best model for plastic_level: logreg
+
+================ target: plastic_type ================
+features: 80,018 columns  (20s)
+/opt/venv/lib64/python3.12/site-packages/sklearn/linear_model/_logistic.py:599: ConvergenceWarning: lbfgs failed to converge after 2000 iteration(s) (status=1):
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT
+
+Increase the number of iterations to improve the convergence (max_iter=2000).
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+Please also refer to the documentation for alternative solver options:
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+  n_iter_i = _check_optimize_result(
+[0]	validation_0-mlogloss:1.75820
+[50]	validation_0-mlogloss:1.45060
+[100]	validation_0-mlogloss:1.39861
+[150]	validation_0-mlogloss:1.36603
+[200]	validation_0-mlogloss:1.34232
+[250]	validation_0-mlogloss:1.32573
+[299]	validation_0-mlogloss:1.31166
+
+--- logreg: acc=0.5671  macroF1=0.4967  weightedF1=0.5734  (417s)
+              precision    recall  f1-score   support
+
+        HDPE      0.210     0.446     0.286       451
+         PET      0.398     0.649     0.494      2398
+          PP      0.339     0.580     0.428      2238
+        film      0.522     0.630     0.571      7868
+ mixed_other      0.620     0.461     0.529     14039
+        none      0.721     0.630     0.672     13006
+
+    accuracy                          0.567     40000
+   macro avg      0.468     0.566     0.497     40000
+weighted avg      0.600     0.567     0.573     40000
+
+
+--- xgboost: acc=0.4453  macroF1=0.3934  weightedF1=0.4583  (264s)
+              precision    recall  f1-score   support
+
+        HDPE      0.103     0.625     0.176       451
+         PET      0.318     0.635     0.424      2398
+          PP      0.241     0.525     0.330      2238
+        film      0.430     0.577     0.493      7868
+ mixed_other      0.539     0.334     0.412     14039
+        none      0.672     0.431     0.525     13006
+
+    accuracy                          0.445     40000
+   macro avg      0.384     0.521     0.393     40000
+weighted avg      0.526     0.445     0.458     40000
+
+>>> best model for plastic_type: logreg
+
+Saved models/*.joblib, reports/metrics.json, reports/figures/cm_*.png

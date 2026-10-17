@@ -1,0 +1,26 @@
+# Secrets — never commit SSH keys
+*.pem
+*.ppk
+
+# Large / regenerable data
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Trained models (regenerate with scripts/train_model.py)
+models/*
+!models/.gitkeep
+*.gguf
+
+# Python / Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/

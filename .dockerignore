@@ -1,0 +1,8 @@
+.git
+data/
+notebooks/
+reports/
+scripts/
+*.pem
+**/__pycache__
+**/.ipynb_checkpoints
