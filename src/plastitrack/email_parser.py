@@ -140,8 +140,12 @@ def redact(text, extra_names=()):
     return text, counts
 
 
-def parse_email(raw):
-    """Full pipeline for one email -> dict with store, date, items, redacted preview, pii counts."""
+def parse_email(raw, llm_extract=None):
+    """Full pipeline for one email -> dict with store, date, items, redacted preview, pii counts.
+
+    llm_extract: optional callable(redacted_text) -> items. Used only when the rule-based
+    layouts find nothing, and it only ever sees the REDACTED text.
+    """
     headers, body = _split_headers(raw)
     to_name = parseaddr(headers.get("to", ""))[0]
     store = _detect_store(headers, body)
@@ -150,9 +154,14 @@ def parse_email(raw):
     # what the user sees in the privacy panel (headers included, then redacted)
     header_txt = "".join(f"{k.title()}: {headers[k]}\n" for k in ("from", "to", "subject", "date") if k in headers)
     redacted, pii = redact(header_txt + "\n" + body, extra_names=[to_name])
+    parsed_by = "rules" if items else "none"
+    if not items and llm_extract is not None:
+        items = llm_extract(redact(body, extra_names=[to_name])[0])
+        parsed_by = "granite" if items else "none"
     for it in items:
-        it.update(store=store, order_date=order_date)
+        it.update(store=store, order_date=order_date, parsed_by=parsed_by)
     return {"store": store, "order_date": order_date, "items": items, "structured": structured,
+            "parsed_by": parsed_by,
             "redacted_text": redacted, "pii_removed": pii}
 
 

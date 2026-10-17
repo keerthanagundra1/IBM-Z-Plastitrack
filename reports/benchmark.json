@@ -1,0 +1,14 @@
+{
+  "machine": "s390x",
+  "byteorder": "big",
+  "cpus": 3,
+  "emails_per_s": 2673,
+  "items_per_s_batch_1000": 3040,
+  "items_per_s_batch_10000": 3062,
+  "items_per_s_batch_50000": 3083,
+  "items_per_s_parallel": 7239,
+  "single_item_ms_p50": 2.19,
+  "single_item_ms_p95": 2.51,
+  "llm_model": "granite-4.0-h-350m-Q8_0-be.gguf",
+  "llm_tip_seconds_avg": 8.1
+}

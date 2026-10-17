@@ -6,3 +6,4 @@ scripts/
 *.pem
 **/__pycache__
 **/.ipynb_checkpoints
+models/llm/granite-4.0-h-1b*

@@ -5,7 +5,7 @@ from .email_parser import parse_email
 from .swaps import short_name, suggest_swap, template_tip
 
 
-def emails_to_items(raw_emails, predictor):
+def emails_to_items(raw_emails, predictor, llm_extract=None):
     """Parse + score a list of raw email texts. Returns (items DataFrame, list of parse results).
 
     Only line items are kept. The parse results are returned so the UI can show
@@ -13,7 +13,7 @@ def emails_to_items(raw_emails, predictor):
     """
     rows, parsed = [], []
     for raw in raw_emails:
-        r = parse_email(raw)
+        r = parse_email(raw, llm_extract=llm_extract)
         parsed.append(r)
         rows.extend(r["items"])
     if not rows:

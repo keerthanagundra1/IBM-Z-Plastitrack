@@ -23,13 +23,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     MPLCONFIGDIR=/tmp/mpl \
     PLASTITRACK_MODELS=/app/models \
-    PLASTITRACK_LLM=/home/ibm-user/granite-4.0-h-350m-base-be.f16.gguf
+    PLASTITRACK_LLM=/app/models/llm/granite-4.0-h-350m-Q8_0-be.gguf
 
 EXPOSE 8501
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/health')"
+  CMD python app/healthcheck.py
 
 # One worker process (sessions live in memory), several threads.
+# HTTPS: mount a cert at /certs and set GUNICORN_CMD_ARGS (see scripts/container.sh).
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["gunicorn", "--chdir", "app", "--workers", "1", "--threads", "4", "--timeout", "300", \
      "--bind", "0.0.0.0:8501", "--worker-tmp-dir", "/tmp", "web:app"]

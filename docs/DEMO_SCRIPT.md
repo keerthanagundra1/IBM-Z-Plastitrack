@@ -1,53 +1,55 @@
 # PlastiTrack: 3-minute demo video script
 
 Target: 2:50 so there is buffer. About 130 spoken words per minute. **[Screen]** is what's on screen;
-the rest is the voice-over. Pre-load everything before recording: SSH tunnel open, container running,
-Granite tips already generated once (the tips are cached, so the button returns instantly on camera).
+the rest is the voice-over.
+
+**Before recording:** SSH tunnel open, container running with HTTPS, open `https://localhost:8501` once and
+accept the self-signed certificate. Click "Personalize tips" once beforehand: tips are cached, so on camera they
+appear instantly. Load "+ 1 free-text email" once beforehand too (its result appears in ~20 s).
 
 ---
 
-### 0:00–0:25 · Problem + supporting data
-**[Screen]** Title card "PlastiTrack", then the EDA chart *Plastic level by category* (`reports/figures/eda_level_by_category.png`).
+### 0:00–0:20 · Problem + supporting data
+**[Screen]** Title card "PlastiTrack", then `reports/figures/eda_level_by_category.png`.
 
 > Every online order arrives wrapped in plastic, but nobody can see how much. We analyzed 200,000 products from
-> Open Food Facts and its sister databases on IBM LinuxONE. Two out of three products with known packaging
-> contain plastic, and the worst categories are personal care, meat, dairy and household goods, exactly the
-> things we re-order online every week.
+> Open Food Facts and its sister databases on IBM LinuxONE. Two out of three contain plastic, and the worst
+> categories, personal care, meat, dairy, household, are exactly what we re-order online every week.
 
-### 0:25–0:50 · Solution
-**[Screen]** Architecture diagram from the README.
+### 0:20–0:40 · Solution
+**[Screen]** Architecture diagram (README).
 
-> PlastiTrack reads your order-confirmation emails, strips out your personal details, and keeps only the line items.
-> A machine-learning model predicts each item's plastic level and plastic type from its product title. We convert
-> that into grams, find the plastic-heavy items you keep buying, and a generative model suggests a personalized
-> lower-plastic swap. And your shopping data never touches a third-party AI API.
+> PlastiTrack reads your order emails, strips your personal details first, and keeps only line items. A
+> machine-learning model predicts each item's plastic level and type, we convert that to grams, and IBM Granite,
+> running locally, suggests personalized swaps. Your shopping data never touches a third-party AI API.
 
-### 0:50–1:25 · IBM Z / LinuxONE tech stack
-**[Screen]** Quick cuts: terminal `check_env.py` (s390x, big-endian) → `train.log` metrics → confusion matrix →
-`container.sh status` (s390x, read-only, cap-drop ALL) → `llama_print_system_info` line.
+### 0:40–1:15 · IBM Z / LinuxONE tech stack
+**[Screen]** Quick cuts: `check_env.py` (s390x, big-endian) → `train.log` metrics + confusion matrix →
+`benchmark.py` output → `crypto_benchmark.sh` table → `container.sh status`.
 
-> Everything runs on IBM LinuxONE, on the s390x big-endian architecture. We processed the 1.3 GB dataset in
-> 90 seconds and trained scikit-learn and XGBoost models right on the machine. Logistic regression won with
-> 61% accuracy on four plastic levels. The generative part is IBM Granite 4.0, a big-endian GGUF model running
-> through llama.cpp on the LinuxONE CPU. The app ships as a hardened Docker container: non-root, read-only
-> filesystem, all Linux capabilities dropped, and reachable only through an encrypted SSH tunnel.
+> Everything runs on IBM LinuxONE, big-endian s390x. We trained scikit-learn and XGBoost models on the machine;
+> logistic regression won with 61% accuracy on four plastic levels. It scores over 7,000 items per second, about
+> 2 milliseconds each. For generative AI we converted IBM's Granite 4.0 instruct model to big-endian and run it
+> with llama.cpp. Security uses the hardware: HTTPS with TLS 1.3, where AES-GCM runs on the IBM Z CPACF crypto
+> unit, 108 times faster than software. And the app ships as a hardened container: non-root, read-only,
+> all capabilities dropped.
 
-### 1:25–2:30 · Live demo
-**[Screen]** Browser at `http://localhost:8501`.
+### 1:15–2:30 · Live demo
+**[Screen]** Browser at `https://localhost:8501`. Point at the 🔐 TLS badge.
 
-1. Click **Load 20 demo order emails**. *"Twenty order emails from three stores, analyzed in a fraction of a second on LinuxONE."*
-2. Point to KPIs. *"About 8 kilograms of plastic in three months, 2.7 kg a month, and 214 personal details removed before anything was kept."*
-3. Hover the **monthly chart** and **category** bars. *"Household and beverages dominate; here's the split by store and plastic type."*
-4. **Alerts & swaps** tab. *"Bottled water, bought six times: almost 3 kg of PET. Granite, running locally, suggests a filter pitcher and a reusable bottle, saving about 2.7 kg."* Show one ✨ tip and its "Generated on LinuxONE" tag.
-5. **Line items** tab. *"Every prediction shows its confidence and where it came from: the ML model or an explicit packaging word in the title."*
-6. **Privacy view**, expand one email. *"This is all the system ever saw: names, addresses, phone numbers, order and card numbers are already redacted."*
+1. **Load 20 demo order emails.** *"Twenty orders from three stores, analyzed in a fraction of a second."* KPIs: about 8 kg in three months, 214 personal details removed.
+2. **Dashboard:** hover the monthly chart and category bars.
+3. **Alerts & swaps:** *"Bottled water, six orders, almost 3 kilograms of PET."* Show the ✨ Granite tip and its "number-checked" tag. Untick/tick swaps in the **impact panel**: *"Adopting five swaps cuts this household's plastic by 59%, about 2,000 bottles a year, and 196 tonnes if 10,000 households did it."*
+4. **Line items:** *"Every prediction is explained. Milk is medium plastic because of 'whole milk' and 'gal'."*
+5. **+ 1 free-text email:** *"This email has no item list at all. The rules fail, so Granite reads the redacted text and extracts the items as JSON, checked against the email so it can't hallucinate."* Show the ✨ rows.
+6. **Privacy view:** *"This is all the system ever saw, with names, addresses, phone and card numbers already redacted."*
 
 ### 2:30–2:50 · Impact
-**[Screen]** Alerts summary line ("Switching could avoid about X kg") and then the title card.
+**[Screen]** Impact panel, then the title card.
 
-> If one household follows these swaps, it avoids several kilograms of plastic a year. Retailers could offer
-> it as a privacy-safe feature, and because it runs on LinuxONE, the AI and the data stay on secure, efficient
-> infrastructure the customer can trust. PlastiTrack: see your plastic, cut your plastic, keep your privacy.
+> One household can avoid kilograms of plastic a year just by seeing it. Retailers could offer this as a
+> privacy-safe feature, and on LinuxONE the AI and the data stay on secure, efficient infrastructure.
+> PlastiTrack: see your plastic, cut your plastic, keep your privacy.
 
 ---
 

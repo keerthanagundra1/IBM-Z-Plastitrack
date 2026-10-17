@@ -31,7 +31,16 @@ Save into `reports/screenshots/` with the file name shown.
 - [ ] `16_port_localhost.png`: `ss -tlnp | grep 8501` → bound to 127.0.0.1 only
 - [ ] `17_ssh_tunnel.png`: laptop terminal running `ssh -L 8501:localhost:8501 ...`
 
+## 5b. Performance + hardware crypto
+- [ ] `23_benchmark.png`: `./scripts/run_remote.sh python scripts/benchmark.py` (items/s, latency, Granite timing)
+- [ ] `24_cpacf.png`: on the host: `bash scripts/crypto_benchmark.sh` (CPACF on vs off, 108× AES-GCM)
+- [ ] `25_tls.png`: `curl -skv https://127.0.0.1:8501/health 2>&1 | grep -E "SSL connection|subject"` (TLS 1.3 / AES-256-GCM)
+- [ ] `26_llm_convert.png`: `ls -la models/llm` + the tail of `bash scripts/get_llm.sh` (big-endian conversion)
+
 ## 6. App demo
+- [ ] `27_app_impact.png`: Alerts tab impact panel (yearly kg, bottles, CO₂e, ×10,000 households)
+- [ ] `28_app_granite_extract.png`: after "+ 1 free-text email", Line items tab showing "✨ extracted by IBM Granite"
+- [ ] `29_app_explain.png`: Line items tab, zoomed on the 🔍 "model signals" lines
 - [ ] `18_app_dashboard.png`: Dashboard tab after "Load 20 demo order emails" (badges show s390x · big-endian)
 - [ ] `19_app_alerts_granite.png`: Alerts tab after "Personalize with Granite" (✨ tips + "Generated on LinuxONE" tag)
 - [ ] `20_app_line_items.png`: Line items tab (confidence bars + `source` column)

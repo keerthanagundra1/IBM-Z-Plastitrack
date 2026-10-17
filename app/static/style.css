@@ -90,6 +90,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
 .lvl-medium { background: #2a78d6; color: #fff; }
 .lvl-high { background: #104281; color: #fff; }
 .src { font-size: 12px; color: var(--muted); }
+.why { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .conf { display: inline-block; width: 60px; height: 6px; background: var(--surface-2); border-radius: 3px; vertical-align: middle; margin-right: 6px; }
 .conf > span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
 
@@ -112,3 +113,14 @@ pre { white-space: pre-wrap; font-size: 12px; background: var(--surface-2); padd
 .redacted { background: #eda10033; border-radius: 3px; padding: 0 2px; }
 .empty { text-align: center; padding: 60px 20px; color: var(--text-2); }
 .error { color: #e34948; }
+
+/* impact / what-if panel */
+.impact { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 8px 0 4px;
+          background: var(--surface-2); border-radius: var(--radius); padding: 14px; }
+@media (max-width: 1100px) { .impact { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.impact .label { color: var(--text-2); font-size: 12.5px; }
+.impact .value { font-size: 22px; font-weight: 700; }
+.impact .value.good { color: var(--good); }
+.impact .sub { color: var(--muted); font-size: 12px; }
+.pick { cursor: pointer; }
+.pick input { margin-right: 6px; accent-color: var(--accent); }

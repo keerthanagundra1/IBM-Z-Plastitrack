@@ -7,9 +7,14 @@ lower-plastic swaps, running entirely on IBM LinuxONE (s390x).**
 
 - 📧 Reads order-confirmation emails → extracts line items → **strips personal details first**
 - 🧠 **Predictive ML** (scikit-learn, trained on LinuxONE on 200k Open Food/Beauty/Products Facts items)
-  predicts each item's *plastic level* and *main plastic type*, then converts it to grams
-- ✨ **Generative AI**: IBM **Granite 4.0** (big-endian GGUF) via **llama.cpp on LinuxONE** writes personalized swap tips
-- 📊 Dashboard: monthly plastic, breakdown by category / store / plastic type, top offenders, repeat-purchase alerts
+  predicts each item's *plastic level* and *main plastic type*, then converts it to grams.
+  Every prediction is **explained** ("model signals: 'whole milk', 'gal'")
+- ✨ **Generative AI**: IBM **Granite 4.0 350M instruct**, converted to big-endian and run by **llama.cpp on LinuxONE**:
+  writes personalized swap tips (with a no-invented-numbers guardrail) and **reads free-text emails** that the
+  rule-based parser can't handle (JSON extraction, grounded against the email text)
+- 📊 Dashboard: monthly plastic, breakdown by category / store / plastic type, top offenders, repeat-purchase alerts,
+  and a **what-if impact panel** (yearly kg, bottles, CO₂e, ×10,000 households)
+- 🔐 **HTTPS (TLS 1.3, AES-256-GCM) accelerated by the IBM Z CPACF crypto unit**: 108× faster AES-GCM than software
 - 🔒 No shopping data ever goes to a third-party AI API. Even the chart library is served locally.
 
 ---
@@ -30,18 +35,20 @@ flowchart LR
         IN["Order emails<br/>upload / paste / demo"] --> PARSE["email_parser.py<br/>regex layouts + generic fallback"]
         PARSE --> REDACT["redact()<br/>names · emails · addresses · phones<br/>order IDs · card digits"]
         PARSE --> ITEMS["Line items only<br/>store · date · product · qty · price"]
-        ITEMS --> PRED["predict.py<br/>ML model + explicit title hints"]
+        REDACT -. "no items found" .-> LLMX["Granite JSON extraction<br/>(redacted text only, grounded)"]
+        LLMX --> ITEMS
+        ITEMS --> PRED["predict.py<br/>ML model + title hints<br/>+ explanation (top signals)"]
         MODELS -.-> PRED
         PRED --> GRAMS["grams.py<br/>category-average weights"]
         GRAMS --> INS["insights.py<br/>monthly · category · store<br/>repeat-purchase alerts"]
         INS --> SWAP["swaps.py<br/>rule-based swap choice"]
-        SWAP --> LLM["llm.py<br/>IBM Granite 4.0 350M (GGUF, big-endian)<br/>llama.cpp on s390x"]
+        SWAP --> LLM["llm.py<br/>IBM Granite 4.0 350M instruct<br/>(GGUF, big-endian) · llama.cpp on s390x<br/>number guardrail"]
         INS --> UI["Flask UI + Vega-Lite (served locally)"]
         LLM --> UI
         REDACT --> UI
     end
 
-    USER(("User browser")) -- "SSH tunnel :8501" --> UI
+    USER(("User browser")) -- "SSH tunnel + HTTPS TLS 1.3<br/>(AES-GCM on IBM Z CPACF)" --> UI
 ```
 
 **Why weak labels?** Open Food Facts rarely records packaging *weights*, but often records packaging *materials
@@ -66,6 +73,25 @@ See `reports/metrics.json` and `reports/figures/`. Held-out test set = 20% (40,0
 Random guessing would score 0.25 (level) and 0.17 (type). Training took about 6–7 minutes per target on 3 LinuxONE vCPUs.
 The most common type confusion is HDPE ↔ PET (both are bottles).
 
+### Inference performance on LinuxONE (3 vCPU) — `python scripts/benchmark.py`
+
+| Task | Result |
+|---|---|
+| Email parsing + PII redaction | 2,673 emails/s |
+| ML scoring (1 core / 3 cores in parallel) | 3,083 / **7,239 items/s** |
+| Single-item latency | p50 2.2 ms, p95 2.5 ms |
+| Granite swap tip (350M instruct, Q8_0) | ~7 s |
+| Granite JSON extraction of a free-text email | ~17 s |
+
+### IBM Z CPACF crypto — `bash scripts/crypto_benchmark.sh` (OpenSSL 3.0, 16 KB blocks)
+
+| Algorithm | CPACF on | CPACF off (software) | Speed-up |
+|---|---|---|---|
+| AES-256-GCM (TLS 1.3 cipher used by the app) | 15,062 MB/s | 140 MB/s | **108×** |
+| AES-128-GCM | 15,176 MB/s | 168 MB/s | 90× |
+| SHA-256 | 4,404 MB/s | 276 MB/s | 16× |
+| SHA-512 | 6,779 MB/s | 441 MB/s | 15× |
+
 The labels are inherently noisy (the same product is sold in different packs), so these are honest numbers.
 For the demo, explicit packaging words in a title ("Glass Jar", "Cans", "Clamshell", "Shampoo Bar") override
 the model, and the UI shows the `source` of every prediction.
@@ -80,10 +106,10 @@ src/plastitrack/
   categories.py     product -> category group (keyword rules)
   features.py       TF-IDF + size/pack-count features (shared by training and inference)
   email_parser.py   email -> line items, and personal-detail redaction
-  predict.py        loads models, hybrid ML + title hints
+  predict.py        loads models, hybrid ML + title hints, per-item explanations
   grams.py          level -> estimated grams of plastic
   swaps.py          swap suggestions + template tips
-  llm.py            IBM Granite via llama.cpp (local), with output sanity checks
+  llm.py            IBM Granite via llama.cpp (local): swap tips + JSON email extraction, with guardrails
   insights.py       pipeline + aggregates + repeat-purchase alerts
   viz.py            shared chart colors (color-blind-safe palette)
 scripts/
@@ -92,10 +118,15 @@ scripts/
   make_eda_notebook.py / make_demo_emails.py
   run_pipeline.py   command-line end-to-end demo
   container.sh      build / run / status of the hardened container (run on LinuxONE)
+  get_llm.sh        download Granite instruct GGUFs + convert to big-endian
+  make_cert.sh      self-signed TLS cert for HTTPS
+  crypto_benchmark.sh  CPACF on/off OpenSSL benchmark
+  benchmark.py      inference throughput / latency
   sync_to_linuxone.sh / run_remote.sh   laptop -> LinuxONE helpers
 app/                Flask web UI (web.py, templates/, static/ incl. vendored Vega JS)
 notebooks/01_eda.ipynb
 demo_emails/        20 synthetic order emails (fictional stores, fake personal data)
+  extra/            a free-text email the rules can't parse (Granite extracts it)
 reports/            metrics.json, figures/ (EDA + confusion matrices), logs
 Dockerfile, requirements*.txt
 ```
@@ -131,18 +162,26 @@ jupyter nbconvert --to notebook --execute --inplace notebooks/01_eda.ipynb
 # 3) train (~25 min on 3 vCPU)
 python scripts/train_model.py
 
+# 3b) Granite instruct LLM (downloads ~1.9 GB, converts to big-endian)
+bash scripts/get_llm.sh
+
 # 4) command-line demo (add --llm for Granite tips)
 python scripts/make_demo_emails.py
 python scripts/run_pipeline.py --llm
 
 # 5) web app, dev mode
 python app/web.py            # http://127.0.0.1:8501
+
+# 6) benchmarks
+python scripts/benchmark.py
+bash scripts/crypto_benchmark.sh     # run on the LinuxONE host (uses its OpenSSL)
 ```
 
 ### Container (on the LinuxONE host)
 
 ```bash
 cd ~/shared/plastitrack
+bash scripts/make_cert.sh         # optional: enables HTTPS (TLS 1.3, CPACF-accelerated)
 ./scripts/container.sh build      # docker build -t plastitrack:1.0 .
 ./scripts/container.sh run        # hardened: 127.0.0.1 only, non-root, read-only FS, cap-drop ALL,
                                   # no-new-privileges, 3 GB / 2 CPU / 256 PID limits
@@ -153,7 +192,8 @@ Open the app from your laptop through an SSH tunnel (the port is never exposed p
 
 ```bash
 ssh -i key.pem -L 8501:localhost:8501 linux1@<linuxone-ip>
-# browse to http://localhost:8501   (http://localhost:8501/demo loads the demo emails directly)
+# browse to https://localhost:8501 (accept the self-signed cert once)
+#   /demo loads the demo emails; /demo?tab=t2 opens Alerts, ?tab=t3 Line items, ?tab=t4 Privacy
 ```
 
 ---
@@ -167,13 +207,22 @@ ssh -i key.pem -L 8501:localhost:8501 linux1@<linuxone-ip>
 | PII redaction | Names, emails, street addresses, city/ZIP, phone numbers, order IDs, card digits are replaced with tags; the UI shows the redacted text so users can verify |
 | No disk writes | Session data lives in server memory only; "Clear my data" deletes it |
 | No CDNs | Vega/Vega-Lite JS is served from the container, so the browser makes no third-party calls |
-| Network | App bound to `127.0.0.1`; reached through an encrypted SSH tunnel |
+| Encryption in transit | HTTPS with TLS 1.3 / AES-256-GCM (ECDSA P-256 cert), executed by the IBM Z **CPACF** unit, inside an SSH tunnel |
+| Network | App bound to `127.0.0.1`; never exposed on a public port |
+| LLM guardrails | Tips containing any number not in the input are rejected; extracted items must appear in the email (words + price) |
+| Explainability | Every prediction shows its source and top model signals |
 | Container hardening | Non-root user, read-only root filesystem, all Linux capabilities dropped, `no-new-privileges`, resource limits, health check |
 
 **IBM Z platform notes.** `/proc/cpuinfo` on our instance lists `nnpa` (the Telum on-chip AI accelerator), `msa`
 (CPACF crypto) and `vx` (vector). The lab's llama.cpp build includes IBM's **zDNN / NNPA backend**. For our small
 350M f16 model we measured no speed-up from NNPA offload (16.1 s vs 15.5 s for one tip), so the app runs the
-LLM on the CPU threads.
+LLM on the CPU threads. GGUF files are little-endian, so we byte-swap IBM's published instruct models with
+llama.cpp's `gguf_convert_endian` (`scripts/get_llm.sh`); the Q8_0 350M instruct model is ~2× faster than the lab's
+f16 base model and follows instructions.
+
+**Known limitations.** Labels are weak (rule-derived); grams are category-average estimates; the redactor catches
+names from greetings and the `To:` header but can miss other people named in free text (e.g. a driver's first name);
+the model has little non-food training data, so electronics use a labeled category default.
 
 ---
 

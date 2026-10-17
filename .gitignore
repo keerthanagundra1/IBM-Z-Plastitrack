@@ -24,3 +24,6 @@ venv/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# TLS certs (generate with scripts/make_cert.sh)
+certs/
